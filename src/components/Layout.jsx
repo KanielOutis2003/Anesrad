@@ -2,6 +2,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { LogOut } from 'lucide-react'
 import { todayLong } from '../lib/utils'
 import toast from 'react-hot-toast'
+import { supabase } from '../lib/supabase'
+import { useEffect, useState } from 'react'
 
 const NAV = [
   { path: '/',            icon: '📊', label: 'Dashboard' },
@@ -26,14 +28,36 @@ const PAGE_TITLES = {
 export default function Layout({ children }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const [user, setUser] = useState(null)
 
-  const handleLogout = () => {
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+    })
+  }, [])
+
+  const handleLogout = async () => {
     const confirmLogout = window.confirm("Are you sure you want to log out?");
     if (confirmLogout) {
-      localStorage.removeItem('isAuthenticated');
-      toast.success('Logged out successfully');
-      navigate('/login');
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.error('Error logging out: ' + error.message);
+      } else {
+        localStorage.removeItem('isAuthenticated');
+        toast.success('Logged out successfully');
+        navigate('/login');
+      }
     }
+  }
+
+  const getInitials = (email) => {
+    if (!email) return '??'
+    return email.substring(0, 2).toUpperCase()
+  }
+
+  const getName = (email) => {
+    if (!email) return 'User'
+    return email.split('@')[0]
   }
 
   return (
@@ -65,10 +89,10 @@ export default function Layout({ children }) {
         </nav>
 
         <div className="sidebar-user">
-          <div className="su-ava">JC</div>
+          <div className="su-ava">{user ? getInitials(user.email) : '...'}</div>
           <div>
-            <div className="su-name">Jecu Cutanda</div>
-            <div className="su-role">Administrator</div>
+            <div className="su-name">{user ? getName(user.email) : 'Loading...'}</div>
+            <div className="su-role">{user ? 'Administrator' : ''}</div>
           </div>
         </div>
       </aside>
