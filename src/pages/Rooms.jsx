@@ -1,25 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
+import { useRealtime } from '../hooks/useRealtime'
 import Modal from '../components/Modal'
 
 const STATUSES = ['available','occupied','cleaning','maintenance']
 const TYPES = ['Standard','Deluxe','Suite']
 
 export default function Rooms() {
-  const [rooms, setRooms] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { data: rooms, loading } = useRealtime('rooms', { orderBy: 'num', ascending: true })
   const [editRoom, setEditRoom] = useState(null)
   const [addOpen, setAddOpen] = useState(false)
   const [saving, setSaving] = useState(false)
-
-  useEffect(() => { load() }, [])
-
-  async function load() {
-    const { data } = await supabase.from('rooms').select('*').order('num')
-    setRooms(data || [])
-    setLoading(false)
-  }
 
   async function saveEdit() {
     setSaving(true)
@@ -33,7 +25,7 @@ export default function Rooms() {
     toast.success(`Room ${editRoom.num} updated`)
     setEditRoom(null)
     setSaving(false)
-    load()
+    // useRealtime auto-updates
   }
 
   async function addRoom(num, type, rate) {
@@ -44,7 +36,7 @@ export default function Rooms() {
     toast.success(`Room ${num} added`)
     setAddOpen(false)
     setSaving(false)
-    load()
+    // useRealtime auto-updates
   }
 
   if (loading) return <div className="loading"><div className="spinner" /> Loading…</div>

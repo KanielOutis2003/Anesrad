@@ -1,5 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
+import { LogOut } from 'lucide-react'
 import { todayLong } from '../lib/utils'
+import toast from 'react-hot-toast'
 
 const NAV = [
   { path: '/',            icon: '📊', label: 'Dashboard' },
@@ -25,12 +27,21 @@ export default function Layout({ children }) {
   const location = useLocation()
   const navigate = useNavigate()
 
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    toast.success('Logged out successfully');
+    navigate('/login');
+  }
+
   return (
     <div className="app">
       <aside className="sidebar">
         <div className="logo">
-          <div className="logo-name">🏨 Anesrad Inn</div>
-          <div className="logo-sub">Hotel System</div>
+          <img src="/favicon.jpg" alt="Logo" style={{ width: 32, height: 32 }} />
+          <div>
+            <div className="logo-name">Anesrad Inn</div>
+            <div className="logo-sub">Hotel System</div>
+          </div>
         </div>
 
         <nav className="nav">
@@ -44,6 +55,10 @@ export default function Layout({ children }) {
               {item.label}
             </button>
           ))}
+          <button className="nav-item logout-btn" onClick={handleLogout} style={{ marginTop: 'auto', color: '#ff4d4f' }}>
+            <span className="ni"><LogOut size={18} /></span>
+            Logout
+          </button>
         </nav>
 
         <div className="sidebar-user">

@@ -1,40 +1,25 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { useState } from 'react'
+import { useRealtime } from '../hooks/useRealtime'
 import { guestTotal, formatDate } from '../lib/utils'
 
 export default function Guests() {
-  const [guests, setGuests] = useState([])
-  const [rooms, setRooms] = useState([])
+  const { data: guests, loading: gLoad } = useRealtime('guests', { orderBy: 'created_at' })
+  const { data: rooms,  loading: rLoad } = useRealtime('rooms',  { orderBy: 'num', ascending: true })
   const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function load() {
-      const [{ data: g }, { data: r }] = await Promise.all([
-        supabase.from('guests').select('*').order('created_at', { ascending: false }),
-        supabase.from('rooms').select('*'),
-      ])
-      setGuests(g || [])
-      setRooms(r || [])
-      setLoading(false)
-    }
-    load()
-  }, [])
 
   const filtered = guests.filter(g =>
     g.name.toLowerCase().includes(search.toLowerCase()) ||
     (g.room_num || '').includes(search)
   )
 
-  if (loading) return <div className="loading"><div className="spinner" /> Loading…</div>
+  if (gLoad || rLoad) return <div className="loading"><div className="spinner" /> Loading…</div>
 
   return (
     <div className="card">
       <div className="card-header">
         <div className="card-title">👥 Guest Records</div>
         <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+          value={search} onChange={e => setSearch(e.target.value)}
           placeholder="🔍  Search guests…"
           style={{ width: 220, padding: '6px 12px', fontSize: 13 }}
         />

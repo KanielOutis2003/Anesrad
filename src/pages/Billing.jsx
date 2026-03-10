@@ -1,40 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
-import { guestTotal, nightsBetween } from '../lib/utils'
+import { useRealtime } from '../hooks/useRealtime'
+import { nightsBetween } from '../lib/utils'
 import Modal from '../components/Modal'
 
 export default function Billing() {
-  const [guests, setGuests] = useState([])
-  const [rooms, setRooms] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { data: guests, loading: gLoad } = useRealtime('guests', { orderBy: 'created_at' })
+  const { data: rooms,  loading: rLoad } = useRealtime('rooms',  { orderBy: 'num', ascending: true })
   const [billGuest, setBillGuest] = useState(null)
-
-  useEffect(() => { load() }, [])
-
-  async function load() {
-    const [{ data: g }, { data: r }] = await Promise.all([
-      supabase.from('guests').select('*').order('created_at', { ascending: false }),
-      supabase.from('rooms').select('*'),
-    ])
-    setGuests(g || [])
-    setRooms(r || [])
-    setLoading(false)
-  }
 
   async function updateExtra(gid, val) {
     await supabase.from('guests').update({ extra: parseFloat(val) || 0 }).eq('id', gid)
-    setGuests(gs => gs.map(g => g.id === gid ? { ...g, extra: parseFloat(val) || 0 } : g))
+    // useRealtime auto-refreshes
   }
 
-  async function markPaid(gid) {
+  async function markPaid(gid, name) {
     await supabase.from('guests').update({ paid: true }).eq('id', gid)
-    const g = guests.find(g => g.id === gid)
-    toast.success(`Payment recorded for ${g?.name}`)
-    setGuests(gs => gs.map(g => g.id === gid ? { ...g, paid: true } : g))
+    toast.success(`Payment recorded for ${name}`)
   }
 
-  if (loading) return <div className="loading"><div className="spinner" /> Loading…</div>
+  if (gLoad || rLoad) return <div className="loading"><div className="spinner" /> Loading…</div>
 
   return (
     <>
@@ -77,7 +63,7 @@ export default function Billing() {
                         <td>
                           {g.paid
                             ? <span className="badge badge-in">✓ Paid</span>
-                            : <button className="btn btn-success btn-sm" onClick={() => markPaid(g.id)}>Mark Paid</button>
+                            : <button className="btn btn-success btn-sm" onClick={() => markPaid(g.id, g.name)}>Mark Paid</button>
                           }
                         </td>
                         <td>

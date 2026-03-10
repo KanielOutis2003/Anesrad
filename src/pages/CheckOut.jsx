@@ -1,27 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
+import { useRealtime } from '../hooks/useRealtime'
 import { guestTotal, formatDate, nightsBetween } from '../lib/utils'
 import Modal from '../components/Modal'
 
 export default function CheckOut() {
-  const [guests, setGuests] = useState([])
-  const [rooms, setRooms] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { data: guests, loading: gLoad } = useRealtime('guests', { orderBy: 'date_out', ascending: true, filters: [{ column: 'status', value: 'in' }] })
+  const { data: rooms,  loading: rLoad } = useRealtime('rooms',  { orderBy: 'num', ascending: true })
   const [billGuest, setBillGuest] = useState(null)
   const [working, setWorking] = useState(null)
-
-  useEffect(() => { load() }, [])
-
-  async function load() {
-    const [{ data: g }, { data: r }] = await Promise.all([
-      supabase.from('guests').select('*').eq('status', 'in').order('date_out'),
-      supabase.from('rooms').select('*'),
-    ])
-    setGuests(g || [])
-    setRooms(r || [])
-    setLoading(false)
-  }
 
   async function doCheckout(g) {
     setWorking(g.id)
@@ -30,10 +18,10 @@ export default function CheckOut() {
     toast.success(`${g.name} checked out from Room ${g.room_num}`)
     setBillGuest(null)
     setWorking(null)
-    load()
+    // No need to manually reload — useRealtime auto-updates
   }
 
-  if (loading) return <div className="loading"><div className="spinner" /> Loading…</div>
+  if (gLoad || rLoad) return <div className="loading"><div className="spinner" /> Loading…</div>
 
   return (
     <>

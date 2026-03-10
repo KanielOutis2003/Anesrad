@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
+import { useRealtime } from '../hooks/useRealtime'
 import Modal from '../components/Modal'
 
 const PRIORITIES = ['Normal', 'High', 'Urgent']
@@ -16,38 +17,22 @@ function PriorityLabel({ p }) {
 }
 
 export default function Housekeeping() {
-  const [tasks, setTasks] = useState([])
-  const [rooms, setRooms] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { data: tasks, loading: tLoad } = useRealtime('housekeeping', { orderBy: 'created_at' })
+  const { data: rooms, loading: rLoad } = useRealtime('rooms', { orderBy: 'num', ascending: true })
   const [addOpen, setAddOpen] = useState(false)
-
-  useEffect(() => { load() }, [])
-
-  async function load() {
-    const [{ data: t }, { data: r }] = await Promise.all([
-      supabase.from('housekeeping').select('*').order('created_at', { ascending: false }),
-      supabase.from('rooms').select('num').order('num'),
-    ])
-    setTasks(t || [])
-    setRooms(r || [])
-    setLoading(false)
-  }
 
   async function markDone(task) {
     await supabase.from('housekeeping').update({ status: 'done' }).eq('id', task.id)
-    // If room was cleaning, mark available
     const { data: room } = await supabase.from('rooms').select('status').eq('num', task.room_num).single()
     if (room?.status === 'cleaning') {
       await supabase.from('rooms').update({ status: 'available' }).eq('num', task.room_num)
     }
     toast.success(`Task done — Room ${task.room_num}`)
-    load()
   }
 
   async function removeTask(id) {
     await supabase.from('housekeeping').delete().eq('id', id)
     toast('🗑 Task removed')
-    setTasks(ts => ts.filter(t => t.id !== id))
   }
 
   async function addTask(room_num, task, staff, priority) {
@@ -57,11 +42,10 @@ export default function Housekeeping() {
     })
     if (error) { toast.error(error.message); return false }
     toast.success(`Task added for Room ${room_num}`)
-    load()
     return true
   }
 
-  if (loading) return <div className="loading"><div className="spinner" /> Loading…</div>
+  if (tLoad || rLoad) return <div className="loading"><div className="spinner" /> Loading…</div>
 
   return (
     <>
@@ -103,14 +87,7 @@ export default function Housekeeping() {
             </div>
         }
       </div>
-
-      {addOpen && (
-        <AddTaskModal
-          rooms={rooms}
-          onClose={() => setAddOpen(false)}
-          onAdd={addTask}
-        />
-      )}
+      {addOpen && <AddTaskModal rooms={rooms} onClose={() => setAddOpen(false)} onAdd={addTask} />}
     </>
   )
 }
