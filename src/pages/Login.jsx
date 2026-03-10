@@ -73,7 +73,7 @@ const Login = () => {
       <div className="login-card">
         <div className="login-left">
           <img 
-            src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=1200" 
+            <img src="/hotel-image.jpg"
             alt="Hotel" 
             className="login-image" 
           />
