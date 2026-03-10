@@ -28,9 +28,12 @@ export default function Layout({ children }) {
   const navigate = useNavigate()
 
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    toast.success('Logged out successfully');
-    navigate('/login');
+    const confirmLogout = window.confirm("Are you sure you want to log out?");
+    if (confirmLogout) {
+      localStorage.removeItem('isAuthenticated');
+      toast.success('Logged out successfully');
+      navigate('/login');
+    }
   }
 
   return (

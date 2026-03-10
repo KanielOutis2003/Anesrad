@@ -38,30 +38,62 @@ export default function CheckIn() {
   }
 
   async function handleSubmit() {
-    if (!form.name || !form.room_num || !form.date_in || !form.date_out) {
-      toast.error('Please fill in all required fields.'); return
+    // Basic validation for primary fields
+    if (!form.name.trim()) {
+      toast.error('Primary guest name is required.'); return
+    }
+    if (!form.room_num) {
+      toast.error('Please select a room.'); return
+    }
+    if (!form.date_in || !form.date_out) {
+      toast.error('Check-in and Check-out dates are required.'); return
     }
     if (form.date_out <= form.date_in) {
       toast.error('Check-out must be after check-in.'); return
     }
+
+    // Validation for additional guests if pax > 1
+    if (form.pax > 1) {
+      const missingNames = form.other_guests.some(name => !name.trim());
+      if (missingNames) {
+        toast.error('Please fill in all additional guest names.');
+        return;
+      }
+    }
+
+    // Contact number validation (simple check for Philippine numbers or general length)
+    if (form.phone && form.phone.length < 10) {
+      toast.error('Please enter a valid contact number.'); return
+    }
+
     setSaving(true)
     
-    // Combine names for storage if needed, or store separately if schema allows
+    // Combine names for storage
     const allGuestNames = [form.name, ...form.other_guests.filter(n => n.trim())].join(', ')
     
-    const { error: gErr } = await supabase.from('guests').insert({
-      name: allGuestNames, phone: form.phone,
-      id_type: form.id_type, id_num: form.id_num,
-      room_num: form.room_num, pax: Number(form.pax),
-      date_in: form.date_in, date_out: form.date_out,
-      notes: form.notes, status: 'in', paid: false, extra: 0,
-    })
-    if (gErr) { toast.error('Error: ' + gErr.message); setSaving(false); return }
-    const shortName = form.name.split(' ').slice(0,2).map((w,i) => i===0 ? w : w[0]+'.').join(' ')
-    await supabase.from('rooms').update({ status: 'occupied', guest_name: shortName }).eq('num', form.room_num)
-    toast.success(`${form.name} checked into Room ${form.room_num}`)
-    setForm({ ...EMPTY, date_in: today() })
-    setSaving(false)
+    try {
+      const { error: gErr } = await supabase.from('guests').insert({
+        name: allGuestNames, phone: form.phone,
+        id_type: form.id_type, id_num: form.id_num,
+        room_num: form.room_num, pax: Number(form.pax),
+        date_in: form.date_in, date_out: form.date_out,
+        notes: form.notes, status: 'in', paid: false, extra: 0,
+      })
+      
+      if (gErr) throw gErr
+
+      const shortName = form.name.split(' ').slice(0,2).map((w,i) => i===0 ? w : w[0]+'.').join(' ')
+      const { error: rErr } = await supabase.from('rooms').update({ status: 'occupied', guest_name: shortName }).eq('num', form.room_num)
+      
+      if (rErr) throw rErr
+
+      toast.success(`${form.name} checked into Room ${form.room_num}`)
+      setForm({ ...EMPTY, date_in: today() })
+    } catch (err) {
+      toast.error('Error: ' + (err.message || 'Something went wrong during check-in.'));
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (

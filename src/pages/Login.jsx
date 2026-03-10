@@ -11,26 +11,72 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    // Basic validation
+    if (!email.trim() || !password.trim()) {
+      toast.error('Please enter both email and password.');
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address.');
+      return;
+    }
+
     setLoading(true);
     
-    // Simple mock login for now - replace with Supabase auth if needed
-    setTimeout(() => {
+    try {
+      // Simple mock login for now
+      // In a real app, this would be supabase.auth.signInWithPassword({ email, password })
+      await new Promise(resolve => setTimeout(resolve, 1200));
+
       if (email === 'admin@anesrad.com' && password === 'admin123') {
         localStorage.setItem('isAuthenticated', 'true');
-        toast.success('Welcome back, Admin!');
+        toast.success('Welcome back, Admin!', {
+          icon: '👋',
+          style: { borderRadius: '10px', background: '#333', color: '#fff' }
+        });
         navigate('/');
       } else {
-        toast.error('Invalid credentials. Try admin@anesrad.com / admin123');
+        throw new Error('Invalid email or password.');
       }
+    } catch (err) {
+      toast.error(err.message || 'Login failed. Please try again.', {
+        duration: 4000,
+        position: 'top-center'
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  const handleForgotPassword = (e) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast.error('Please enter your email first.');
+      return;
+    }
+    toast.promise(
+      new Promise((resolve) => setTimeout(resolve, 2000)),
+      {
+        loading: 'Sending recovery email...',
+        success: `Recovery link sent to ${email}!`,
+        error: 'Failed to send recovery email.',
+      }
+    );
   };
 
   return (
     <div className="login-page">
       <div className="login-card">
         <div className="login-left">
-          <img src="/hotel-image.jpg" alt="Hotel" className="login-image" />
+          <img 
+            src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=1200" 
+            alt="Hotel" 
+            className="login-image" 
+          />
           <div className="overlay">
             <div className="overlay-text">
               <h2>Welcome Back</h2>
@@ -73,7 +119,7 @@ const Login = () => {
               <label className="remember-me">
                 <input type="checkbox" /> Remember me
               </label>
-              <a href="#" className="forgot-password">Forgot password?</a>
+              <a href="#" onClick={handleForgotPassword} className="forgot-password">Forgot password?</a>
             </div>
             <button type="submit" className="btn-login-submit" disabled={loading}>
               {loading ? 'Logging in...' : (
@@ -94,7 +140,7 @@ const Login = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #f0f2f5;
+          background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
           padding: 2rem;
           font-family: 'Inter', sans-serif;
         }
@@ -106,7 +152,7 @@ const Login = () => {
           background: #fff;
           border-radius: 24px;
           overflow: hidden;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
         .login-left {
           flex: 1.2;
@@ -124,7 +170,7 @@ const Login = () => {
         .overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2));
+          background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.1));
           display: flex;
           align-items: flex-end;
           padding: 3rem;
@@ -133,13 +179,15 @@ const Login = () => {
           color: #fff;
         }
         .overlay-text h2 {
-          font-size: 2.5rem;
+          font-size: 2.8rem;
           margin-bottom: 0.5rem;
+          font-weight: 800;
         }
         .overlay-text p {
           font-size: 1.1rem;
           opacity: 0.9;
-          max-width: 300px;
+          max-width: 320px;
+          line-height: 1.6;
         }
         .login-right {
           flex: 1;
@@ -147,6 +195,7 @@ const Login = () => {
           display: flex;
           flex-direction: column;
           justify-content: center;
+          background: #fff;
         }
         .login-header {
           margin-bottom: 2.5rem;
@@ -154,20 +203,23 @@ const Login = () => {
         .login-logo {
           display: flex;
           align-items: center;
-          gap: 10px;
-          font-weight: 700;
+          gap: 12px;
+          font-weight: 800;
           margin-bottom: 1.5rem;
           letter-spacing: 1px;
           font-size: 1.2rem;
+          color: #1a1a1a;
         }
         .logo-img-small {
-          width: 32px;
-          height: 32px;
+          width: 36px;
+          height: 36px;
+          border-radius: 8px;
         }
         .login-header h1 {
-          font-size: 1.8rem;
+          font-size: 2rem;
           color: #1a1a1a;
           margin-bottom: 0.5rem;
+          font-weight: 800;
         }
         .login-header p {
           color: #666;
@@ -185,17 +237,17 @@ const Login = () => {
         }
         .input-group label {
           font-size: 0.9rem;
-          font-weight: 600;
+          font-weight: 700;
           color: #4a4a4a;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
         }
         .input-group input {
-          padding: 0.8rem 1rem;
+          padding: 0.9rem 1.2rem;
           border-radius: 12px;
-          border: 1px solid #e1e1e1;
-          background: #f9f9f9;
+          border: 1px solid #e2e8f0;
+          background: #f8fafc;
           transition: all 0.2s;
           font-size: 1rem;
         }
@@ -203,7 +255,7 @@ const Login = () => {
           border-color: #1a1a1a;
           background: #fff;
           outline: none;
-          box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
+          box-shadow: 0 0 0 4px rgba(0,0,0,0.06);
         }
         .login-options {
           display: flex;
@@ -215,34 +267,39 @@ const Login = () => {
           display: flex;
           align-items: center;
           gap: 8px;
-          color: #666;
+          color: #64748b;
           cursor: pointer;
+          font-weight: 500;
         }
         .forgot-password {
           color: #1a1a1a;
-          font-weight: 600;
+          font-weight: 700;
           text-decoration: none;
+          transition: color 0.2s;
+        }
+        .forgot-password:hover {
+          color: #3b82f6;
         }
         .btn-login-submit {
-          padding: 1rem;
+          padding: 1.1rem;
           background: #1a1a1a;
           color: #fff;
           border: none;
           border-radius: 12px;
           font-size: 1rem;
-          font-weight: 600;
+          font-weight: 700;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
+          gap: 10px;
           transition: all 0.3s;
           margin-top: 1rem;
         }
         .btn-login-submit:hover {
-          background: #333;
+          background: #000;
           transform: translateY(-2px);
-          box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+          box-shadow: 0 12px 24px rgba(0,0,0,0.15);
         }
         .btn-login-submit:disabled {
           opacity: 0.7;
@@ -250,14 +307,14 @@ const Login = () => {
           transform: none;
         }
         .login-footer {
-          margin-top: 2rem;
+          margin-top: 2.5rem;
           text-align: center;
-          font-size: 0.9rem;
-          color: #666;
+          font-size: 0.95rem;
+          color: #64748b;
         }
         .login-footer a {
           color: #1a1a1a;
-          font-weight: 600;
+          font-weight: 700;
           text-decoration: none;
         }
       `}</style>

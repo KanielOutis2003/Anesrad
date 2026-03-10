@@ -18,12 +18,27 @@ export function useRealtime(table, { orderBy = 'created_at', ascending = false, 
   const [error, setError] = useState(null)
 
   const fetch = useCallback(async () => {
-    let query = supabase.from(table).select('*').order(orderBy, { ascending })
-    filters.forEach(f => { query = query.eq(f.column, f.value) })
-    const { data: rows, error: err } = await query
-    if (err) { setError(err.message); setLoading(false); return }
-    setData(rows || [])
-    setLoading(false)
+    try {
+      setLoading(true)
+      let query = supabase.from(table).select('*').order(orderBy, { ascending })
+      filters.forEach(f => { query = query.eq(f.column, f.value) })
+      
+      const { data: rows, error: err } = await query
+      
+      if (err) {
+        console.error(`Supabase fetch error [${table}]:`, err)
+        setError(`Failed to fetch ${table}. Please check your connection.`)
+        return
+      }
+      
+      setData(rows || [])
+      setError(null)
+    } catch (err) {
+      console.error(`Unexpected error [${table}]:`, err)
+      setError('An unexpected error occurred.')
+    } finally {
+      setLoading(false)
+    }
   }, [table, orderBy, ascending, JSON.stringify(filters)])
 
   useEffect(() => {
