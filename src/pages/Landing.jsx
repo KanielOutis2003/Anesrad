@@ -54,6 +54,12 @@ const Login = () => {
 
   return (
     <div className="login-page">
+      <div className="landing-nav" aria-label="Primary">
+        <a href="#Home">Home</a>
+        <a href="#aboutme">About Me</a>
+        <a href="#skills">Skills</a>
+        <a href="#contact">Contact</a>
+      </div>
       <div className="login-card">
         <div className="login-left">
           <img src="/hotel-image.jpg" alt="Hotel" className="login-image" />
@@ -116,13 +122,29 @@ const Login = () => {
 
       <style jsx>{`
         .login-page {
-          height: 100vh;
+          min-height: 100vh;
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
           background: #f0f2f5;
           padding: 2rem;
           font-family: 'Inter', sans-serif;
+          gap: 1rem;
+        }
+        .landing-nav {
+          width: 100%;
+          max-width: 1000px;
+          display: flex;
+          justify-content: flex-end;
+          gap: 1.25rem;
+          padding: 0 0.25rem;
+        }
+        .landing-nav a {
+          text-decoration: none;
+          color: #1a1a1a;
+          font-weight: 700;
+          font-size: 0.95rem;
         }
         .login-card {
           display: flex;
