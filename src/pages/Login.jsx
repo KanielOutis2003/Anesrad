@@ -29,6 +29,24 @@ const Login = () => {
 
     setLoading(true);
     try {
+      const isDemoLogin = email.trim().toLowerCase() === 'admin@anesrad.com' && password === 'admin123';
+
+      if (isDemoLogin) {
+        localStorage.setItem('isAuthenticated', 'true');
+        toast.success('Welcome back to Anesrad Inn!', {
+          icon: '🏨',
+          style: {
+            borderRadius: '12px',
+            background: '#1e293b',
+            color: '#fff',
+            fontSize: '14px',
+            padding: '12px 20px',
+          },
+        });
+        navigate('/');
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,

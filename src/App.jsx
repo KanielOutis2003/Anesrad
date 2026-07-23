@@ -63,9 +63,18 @@ export default function App() {
   const [session, setSession] = useState(undefined);
 
   useEffect(() => {
+    const isDemoAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+    if (isDemoAuthenticated) {
+      setSession({ user: { email: 'admin@anesrad.com' } });
+      return;
+    }
+
     // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+    }).catch(() => {
+      setSession(null);
     });
 
     // Listen for auth changes
