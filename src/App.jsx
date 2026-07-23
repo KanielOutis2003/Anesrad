@@ -63,28 +63,38 @@ export default function App() {
   const [session, setSession] = useState(undefined);
 
   useEffect(() => {
-    const isDemoAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    const syncSession = () => {
+      const isDemoAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
 
-    if (isDemoAuthenticated) {
-      setSession({ user: { email: 'admin@anesrad.com' } });
-      return;
-    }
+      if (isDemoAuthenticated) {
+        setSession({ user: { email: 'admin@anesrad.com' } });
+        return;
+      }
 
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    }).catch(() => {
-      setSession(null);
-    });
+      supabase.auth.getSession()
+        .then(({ data: { session } }) => {
+          setSession(session);
+        })
+        .catch(() => {
+          setSession(null);
+        });
+    };
 
-    // Listen for auth changes
+    syncSession();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    const handleAuthChanged = () => syncSession();
+    window.addEventListener('auth-changed', handleAuthChanged);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('auth-changed', handleAuthChanged);
+    };
   }, []);
 
   return (

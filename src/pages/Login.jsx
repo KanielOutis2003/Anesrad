@@ -33,6 +33,7 @@ const Login = () => {
 
       if (isDemoLogin) {
         localStorage.setItem('isAuthenticated', 'true');
+        window.dispatchEvent(new Event('auth-changed'));
         toast.success('Welcome back to Anesrad Inn!', {
           icon: '🏨',
           style: {
@@ -56,6 +57,7 @@ const Login = () => {
 
       if (data.user) {
         localStorage.setItem('isAuthenticated', 'true');
+        window.dispatchEvent(new Event('auth-changed'));
         toast.success('Welcome back to Anesrad Inn!', {
           icon: '🏨',
           style: {
